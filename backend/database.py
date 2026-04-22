@@ -2,19 +2,24 @@
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from psycopg2.pool import SimpleConnectionPool
-from dotenv import load_dotenv
 import os
 
-load_dotenv()
+# Railway provides DATABASE_URL automatically
+DATABASE_URL = os.getenv("DATABASE_URL")
 
-pool = SimpleConnectionPool(
-    1, 10,
-    host=os.getenv("DB_HOST", "localhost"),
-    port=os.getenv("DB_PORT", "5432"),
-    database=os.getenv("DB_NAME", "thesis_research"),
-    user=os.getenv("DB_USER", "postgres"),
-    password=os.getenv("DB_PASSWORD", ""),
-)
+if DATABASE_URL:
+    # Use Railway's DATABASE_URL
+    pool = SimpleConnectionPool(1, 10, DATABASE_URL)
+else:
+    # Fallback to individual env vars for local development
+    pool = SimpleConnectionPool(
+        1, 10,
+        host=os.getenv("DB_HOST", "localhost"),
+        port=os.getenv("DB_PORT", "5432"),
+        database=os.getenv("DB_NAME", "thesis_research"),
+        user=os.getenv("DB_USER", "postgres"),
+        password=os.getenv("DB_PASSWORD", ""),
+    )
 
 def get_db():
     """Get a database connection from the pool."""
