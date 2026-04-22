@@ -1,0 +1,24 @@
+cd ~/Desktop/thesis-portal
+cat > .gitignore << 'EOF'
+# Backend
+backend/venv/
+backend/__pycache__/
+backend/**/__pycache__/
+backend/.env
+*.pyc
+*.pyo
+
+# Frontend
+frontend/node_modules/
+frontend/.next/
+frontend/.env.local
+frontend/out/
+
+# Scripts
+scripts/venv/
+scripts/__pycache__/
+scripts/data/
+
+# OS
+.DS_Store
+EOF
