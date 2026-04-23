@@ -14,7 +14,7 @@ async def get_mpesa_yearly():
             SUM(transaction_volume) as transactions,
             SUM(transaction_value_kes) as value_kes,
             MAX(agent_count) as agents
-        FROM mpesa_metrics
+        FROM mpesa_data
         GROUP BY year
         ORDER BY year
     """
@@ -30,7 +30,7 @@ async def get_mpesa_growth():
                 year,
                 MAX(active_users_monthly) as users,
                 SUM(transaction_volume) as txns
-            FROM mpesa_metrics
+            FROM mpesa_data
             GROUP BY year
         )
         SELECT 
@@ -67,7 +67,7 @@ async def get_summary_stats():
             MAX(year) as latest_year,
             (SELECT COUNT(*) FROM literature) as literature_count,
             (SELECT COUNT(*) FROM research_notes) as notes_count
-        FROM mpesa_metrics
+        FROM mpesa_data
     """
     result = execute_query(query)
     return result[0] if result else {}
