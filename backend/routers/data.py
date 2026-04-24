@@ -1,61 +1,48 @@
+"""Data analysis endpoints."""
 from fastapi import APIRouter
 from database import execute_query
-from typing import List
 
-router = APIRouter(prefix="/data", tags=["Data"])
+router = APIRouter(prefix="/data", tags=["data"])
 
 @router.get("/mpesa/yearly")
-async def get_mpesa_yearly():
-    """Get M-PESA metrics aggregated by year."""
+async def get_yearly_data():
+    """Get M-PESA data aggregated by year."""
     query = """
-        SELECT 
-            year,
-            MAX(active_users_monthly) as active_users,
-            SUM(transaction_volume) as transactions,
-            SUM(transaction_value_kes) as value_kes,
-            MAX(agent_count) as agents
+        SELECT year, active_users, transactions, value_kes, agents
         FROM mpesa_data
-        GROUP BY year
         ORDER BY year
     """
-    results = execute_query(query)
-    return results
+    return execute_query(query)
 
 @router.get("/mpesa/growth")
-async def get_mpesa_growth():
+async def get_growth_rates():
     """Calculate year-over-year growth rates."""
     query = """
         WITH yearly AS (
             SELECT 
                 year,
-                MAX(active_users_monthly) as users,
-                SUM(transaction_volume) as txns
+                active_users,
+                transactions,
+                LAG(active_users) OVER (ORDER BY year) as prev_users,
+                LAG(transactions) OVER (ORDER BY year) as prev_txns
             FROM mpesa_data
-            GROUP BY year
+            ORDER BY year
         )
         SELECT 
             year,
-            users,
-            txns,
-            ROUND(((users::numeric - LAG(users) OVER (ORDER BY year)) / 
-                   NULLIF(LAG(users) OVER (ORDER BY year), 0) * 100), 2) as user_growth_pct,
-            ROUND(((txns::numeric - LAG(txns) OVER (ORDER BY year)) / 
-                   NULLIF(LAG(txns) OVER (ORDER BY year), 0) * 100), 2) as txn_growth_pct
+            active_users as users,
+            transactions as txns,
+            CASE 
+                WHEN prev_users > 0 THEN ROUND(((active_users - prev_users)::numeric / prev_users * 100), 1)
+                ELSE NULL
+            END as user_growth_pct,
+            CASE 
+                WHEN prev_txns > 0 THEN ROUND(((transactions - prev_txns)::numeric / prev_txns * 100), 1)
+                ELSE NULL
+            END as txn_growth_pct
         FROM yearly
-        ORDER BY year
     """
-    results = execute_query(query)
-    return results
-
-@router.get("/financial-inclusion")
-async def get_financial_inclusion():
-    """Get financial inclusion metrics."""
-    query = """
-        SELECT * FROM financial_inclusion_metrics
-        ORDER BY year DESC, region
-    """
-    results = execute_query(query)
-    return results
+    return execute_query(query)
 
 @router.get("/stats/summary")
 async def get_summary_stats():
@@ -63,9 +50,8 @@ async def get_summary_stats():
     query = """
         SELECT 
             COUNT(DISTINCT year) as years_covered,
-            MIN(year) as first_year,
-            MAX(year) as latest_year,
-            (SELECT COUNT(*) FROM literature) as literature_count,
+            MAX(active_users) as max_users,
+            SUM(transactions) as total_transactions,
             (SELECT COUNT(*) FROM research_notes) as notes_count
         FROM mpesa_data
     """
