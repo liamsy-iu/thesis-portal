@@ -17,13 +17,39 @@ const inter = Inter({
   variable: "--font-inter",
 });
 
+const PASSWORD = process.env.NEXT_PUBLIC_PASSWORD || "thesis2025";
+
 export default function RootLayout({ children }) {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
+    // Check if already authenticated
+    const auth = localStorage.getItem("thesis-auth");
+    if (auth === "authenticated") {
+      setIsAuthenticated(true);
+    }
   }, []);
+
+  const handleLogin = (e) => {
+    e.preventDefault();
+    if (password === PASSWORD) {
+      localStorage.setItem("thesis-auth", "authenticated");
+      setIsAuthenticated(true);
+      setError("");
+    } else {
+      setError("Incorrect password");
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("thesis-auth");
+    setIsAuthenticated(false);
+  };
 
   const toggleTheme = () => {
     const currentTheme =
@@ -39,6 +65,45 @@ export default function RootLayout({ children }) {
     mounted && typeof window !== "undefined"
       ? document.documentElement.getAttribute("data-theme") || "light"
       : "light";
+
+  // Show login screen if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <html lang="en" className={`${crimsonPro.variable} ${inter.variable}`}>
+        <body>
+          <div className="min-h-screen flex items-center justify-center bg-primary">
+            <div className="bg-card p-8 rounded-lg shadow-lg max-w-md w-full">
+              <h1 className="text-2xl font-bold text-primary mb-6 text-center font-crimson">
+                Thesis Research Portal
+              </h1>
+              <p className="text-secondary text-sm mb-6 text-center">
+                Enter password to access the portal
+              </p>
+              <form onSubmit={handleLogin} className="space-y-4">
+                <div>
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full px-4 py-3 rounded bg-secondary border border-theme text-primary"
+                    placeholder="Enter password"
+                    autoFocus
+                  />
+                </div>
+                {error && <p className="text-red-500 text-sm">{error}</p>}
+                <button
+                  type="submit"
+                  className="w-full bg-accent hover:bg-accent-dark text-white py-3 rounded font-medium"
+                >
+                  Access Portal
+                </button>
+              </form>
+            </div>
+          </div>
+        </body>
+      </html>
+    );
+  }
 
   return (
     <html
@@ -101,6 +166,14 @@ export default function RootLayout({ children }) {
               suppressHydrationWarning
             >
               {mounted ? (currentTheme === "light" ? "🌙" : "☀️") : "🌙"}
+            </button>
+
+            {/* Logout button */}
+            <button
+              onClick={handleLogout}
+              className="hidden md:block text-sm text-secondary hover:text-accent mr-4"
+            >
+              Logout
             </button>
 
             {/* Mobile menu button */}
@@ -180,6 +253,14 @@ export default function RootLayout({ children }) {
                     ? "🌙 Dark Mode"
                     : "☀️ Light Mode"
                   : "🌙 Dark Mode"}
+              </button>
+
+              {/* Mobile logout */}
+              <button
+                onClick={handleLogout}
+                className="w-full text-left text-sm text-secondary hover:text-accent transition py-2 font-medium"
+              >
+                Logout
               </button>
             </div>
           )}
