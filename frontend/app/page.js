@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import Link from "next/link";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8002";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://thesis-portal-pythonversion3120.up.railway.app";
 
 export default function Dashboard() {
   const [stats, setStats] = useState(null);
