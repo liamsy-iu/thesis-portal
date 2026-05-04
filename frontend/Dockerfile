@@ -5,8 +5,10 @@ COPY package*.json ./
 RUN npm install
 COPY . .
 
-# Set the Railway backend URL
+# Set environment variables
 ENV NEXT_PUBLIC_API_URL=https://thesis-portal-pythonversion3120.up.railway.app
+ENV NEXT_PUBLIC_PASSWORD=Dicaprio@5991
+ENV NEXT_PUBLIC_AUTH_TOKEN=secret-auth-token-2024
 
 RUN npm run build
 
